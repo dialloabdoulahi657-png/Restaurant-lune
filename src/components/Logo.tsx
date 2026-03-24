@@ -6,7 +6,7 @@ interface LogoProps {
   color?: string;
 }
 
-export const Logo = ({ className, color = "#80b435" }: LogoProps) => {
+export const Logo = ({ className, color = "#96582a" }: LogoProps) => {
   return (
     <svg 
       viewBox="0 0 320 100" 

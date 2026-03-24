@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #80b435;
+  --color-primary: #8B5E3C;
   --color-cream: #FFFFFF;
   --color-ink: #1A1A1A;
   
@@ -33,7 +33,7 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #6a962c;
+    background: #6D4A2F;
   }
 
   /* Utilities */
