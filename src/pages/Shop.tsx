@@ -3,6 +3,7 @@ import { useApp } from '@/src/context';
 import { MOCK_MENU } from '@/src/mockData';
 import { Card, Button, Input } from '@/src/components/UI';
 import { ShoppingBag, Trash2, Plus, Minus, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 
@@ -99,7 +100,9 @@ export const Shop = () => {
           {cartItems.length === 0 ? (
             <div className="text-center py-24 bg-white rounded-[40px] border border-black/5">
               <p className="text-ink/40 text-lg mb-6">Votre panier est vide</p>
-              <Button variant="outline" onClick={() => window.location.href = '/menu'}>Voir le menu</Button>
+              <Link to="/menu">
+                <Button variant="outline">Voir le menu</Button>
+              </Link>
             </div>
           ) : (
             cartItems.map((item) => (

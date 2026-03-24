@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Link } from 'react-router-dom';
 import { AppProvider, useApp } from './context';
 import { Navbar } from './components/Navbar';
 import { SiteSelector } from './components/SiteSelector';
@@ -98,10 +98,10 @@ const AppContent = () => {
               <div>
                 <h4 className="font-bold mb-6 uppercase tracking-widest text-xs">Navigation</h4>
                 <ul className="space-y-4 text-cream/60">
-                  <li><a href="/menu" className="hover:text-primary transition-colors">Menu</a></li>
-                  <li><a href="/reservation" className="hover:text-primary transition-colors">Réservation</a></li>
-                  <li><a href="/shop" className="hover:text-primary transition-colors">Click & Collect</a></li>
-                  <li><a href="/admin" className="hover:text-primary transition-colors">Espace Gérant</a></li>
+                  <li><Link to="/menu" className="hover:text-primary transition-colors">Menu</Link></li>
+                  <li><Link to="/reservation" className="hover:text-primary transition-colors">Réservation</Link></li>
+                  <li><Link to="/shop" className="hover:text-primary transition-colors">Click & Collect</Link></li>
+                  <li><Link to="/admin" className="hover:text-primary transition-colors">Espace Gérant</Link></li>
                 </ul>
               </div>
               <div>
