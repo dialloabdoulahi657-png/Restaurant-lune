@@ -7,6 +7,7 @@ import { Home } from './pages/Home';
 import { Menu } from './pages/Menu';
 import { NewsPage } from './pages/News';
 import { Shop } from './pages/Shop';
+import { Checkout } from './pages/Checkout';
 import { Reservation } from './pages/Reservation';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
@@ -60,6 +61,7 @@ const AppContent = () => {
           <Route path="/menu" element={<PageWrapper><Menu /></PageWrapper>} />
           <Route path="/news" element={<PageWrapper><NewsPage /></PageWrapper>} />
           <Route path="/shop" element={<PageWrapper><Shop /></PageWrapper>} />
+          <Route path="/checkout" element={<PageWrapper><Checkout /></PageWrapper>} />
           <Route path="/reservation" element={<PageWrapper><Reservation /></PageWrapper>} />
           <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
           <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />

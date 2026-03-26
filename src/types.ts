@@ -9,6 +9,8 @@ export interface MenuItem {
   price: number;
   image_url: string;
   is_available: boolean;
+  portions?: string;
+  allergens?: string[];
 }
 
 export interface MenuCategory {
