@@ -1,28 +1,10 @@
--- SQL Schema for Supabase
+-- SQL Schema for Supabase (4 Tables)
 
--- Sites table
-CREATE TABLE sites (
+-- 1. Menu Items Table
+CREATE TABLE menu (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL, -- 'Marcory' or 'Bingerville'
-  address TEXT,
-  phone TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Menu Categories
-CREATE TABLE menu_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  site_id UUID REFERENCES sites(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  display_order INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Menu Items
-CREATE TABLE menu_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  site_id UUID REFERENCES sites(id) ON DELETE CASCADE,
-  category_id UUID REFERENCES menu_categories(id) ON DELETE CASCADE,
+  site_id TEXT NOT NULL, -- '1' for Marcory, '2' for Bingerville
+  category TEXT NOT NULL, -- e.g., 'Petit-déjeuner', 'Plats', 'Desserts'
   name TEXT NOT NULL,
   description TEXT,
   price DECIMAL(10, 2) NOT NULL,
@@ -31,32 +13,37 @@ CREATE TABLE menu_items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Orders (Click & Collect)
+-- 2. News/Events Table
+CREATE TABLE news (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  site_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT,
+  content TEXT NOT NULL,
+  image_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 3. Orders (Click & Collect) Table
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  site_id UUID REFERENCES sites(id) ON DELETE CASCADE,
+  site_id TEXT NOT NULL,
   customer_name TEXT NOT NULL,
   customer_email TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
   total_price DECIMAL(10, 2) NOT NULL,
   status TEXT DEFAULT 'received', -- 'received', 'preparing', 'ready', 'completed'
-  pickup_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  pickup_date DATE NOT NULL,
+  pickup_time TEXT,
+  notes TEXT,
+  items JSONB, -- Array of items ordered
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Order Items
-CREATE TABLE order_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
-  menu_item_id UUID REFERENCES menu_items(id) ON DELETE SET NULL,
-  quantity INTEGER NOT NULL,
-  price_at_time DECIMAL(10, 2) NOT NULL
-);
-
--- Reservations
+-- 4. Reservations Table
 CREATE TABLE reservations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  site_id UUID REFERENCES sites(id) ON DELETE CASCADE,
+  site_id TEXT NOT NULL,
   customer_name TEXT NOT NULL,
   customer_email TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
@@ -67,18 +54,3 @@ CREATE TABLE reservations (
   status TEXT DEFAULT 'pending', -- 'pending', 'confirmed', 'cancelled'
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- News/Events
-CREATE TABLE news (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  site_id UUID REFERENCES sites(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  image_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Initial Data
-INSERT INTO sites (name, address, phone) VALUES 
-('Marcory', 'Zone 4, Rue du Canal, Marcory, Abidjan', '+225 07 00 00 00 01'),
-('Bingerville', 'Quartier Résidentiel, Bingerville', '+225 07 00 00 00 02');

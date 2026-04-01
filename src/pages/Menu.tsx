@@ -1,18 +1,70 @@
 import * as React from 'react';
 import { useApp } from '@/src/context';
-import { MOCK_CATEGORIES, MOCK_MENU } from '@/src/mockData';
-import { Card, Badge, Button } from '@/src/components/UI';
+import { Card, Button } from '@/src/components/UI';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShoppingCart, Plus, Minus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/src/lib/supabase';
 
 export const Menu = () => {
   const { site, addToCart } = useApp();
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
+  const [categories, setCategories] = React.useState<any[]>([]);
+  const [items, setItems] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   const siteId = site === 'Marcory' ? '1' : '2';
-  const categories = MOCK_CATEGORIES.filter(c => c.site_id === siteId);
-  const items = MOCK_MENU.filter(i => i.site_id === siteId);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch all items and filter in JS to handle 'All' location
+      const { data: menuData } = await supabase
+        .from('menu')
+        .select('*');
+
+      if (menuData) {
+        // Filter by site_id (numeric ID or 'All')
+        const filteredBySite = menuData.filter((item: any) => {
+          const sId = String(item.site_id || item.location || '');
+          if (!sId) return false;
+          
+          const normalizedSId = sId.toLowerCase();
+          const normalizedSite = String(site).toLowerCase();
+
+          return sId === siteId || 
+                 normalizedSId === normalizedSite || 
+                 sId === 'All' ||
+                 normalizedSId === 'all' ||
+                 normalizedSId === 'tous';
+        });
+        
+        setItems(filteredBySite);
+        
+        // Extract unique categories from menu items
+        const uniqueCategories = Array.from(new Set(filteredBySite.map((item: any) => item.category)))
+          .filter(Boolean)
+          .map(name => ({
+            id: name,
+            name
+          }));
+        
+        setCategories(uniqueCategories);
+        if (uniqueCategories.length > 0 && !activeCategory) {
+          setActiveCategory(uniqueCategories[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching menu:', error);
+      toast.error('Erreur lors du chargement du menu');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchData();
+  }, [siteId]);
 
   React.useEffect(() => {
     if (categories.length > 0 && !activeCategory) {
@@ -21,7 +73,7 @@ export const Menu = () => {
   }, [categories]);
 
   const filteredItems = activeCategory 
-    ? items.filter(i => i.category_id === activeCategory)
+    ? items.filter(i => i.category === activeCategory)
     : items;
 
   const handleAddToCart = (item: any) => {
@@ -56,45 +108,49 @@ export const Menu = () => {
       {/* Menu Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <AnimatePresence mode="popLayout">
-          {filteredItems.map((item) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-            >
-              <Card className="h-full flex flex-col group">
-                <div className="relative h-64 overflow-hidden">
-                  <img 
-                    src={item.image_url} 
-                    alt={item.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                  {!item.is_available && (
-                    <div className="absolute inset-0 bg-ink/60 flex items-center justify-center">
-                      <span className="text-white font-bold uppercase tracking-widest">Rupture de stock</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-bold">{item.name}</h3>
-                    <span className="text-primary font-bold">{item.price.toLocaleString()} FCFA</span>
+          {filteredItems.map((item) => {
+            const isAvailable = item.available !== undefined ? item.available : (item.is_available !== undefined ? item.is_available : item.disponible);
+            
+            return (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+              >
+                <Card className="h-full flex flex-col group">
+                  <div className="relative h-64 overflow-hidden">
+                    <img 
+                      src={item.image_url || item.image} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      referrerPolicy="no-referrer"
+                    />
+                    {!isAvailable && (
+                      <div className="absolute inset-0 bg-ink/60 flex items-center justify-center">
+                        <span className="text-white font-bold uppercase tracking-widest">Rupture de stock</span>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-ink/60 text-sm mb-6 flex-1">{item.description}</p>
-                  <Button 
-                    onClick={() => handleAddToCart(item)}
-                    disabled={!item.is_available}
-                    className="w-full gap-2"
-                  >
-                    <Plus size={18} /> Ajouter au panier
-                  </Button>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold">{item.name}</h3>
+                      <span className="text-primary font-bold">{item.price.toLocaleString()} FCFA</span>
+                    </div>
+                    <p className="text-ink/60 text-sm mb-6 flex-1">{item.description}</p>
+                    <Button 
+                      onClick={() => handleAddToCart(item)}
+                      disabled={!isAvailable}
+                      className="w-full gap-2"
+                    >
+                      <Plus size={18} /> Ajouter au panier
+                    </Button>
+                  </div>
+                </Card>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
     </div>

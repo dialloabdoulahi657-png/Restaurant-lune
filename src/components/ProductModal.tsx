@@ -75,9 +75,6 @@ export const ProductModal = ({ item, onClose }: ProductModalProps) => {
             <div className="md:w-1/2 p-10 overflow-y-auto flex flex-col">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
-                    {item.portions || '1 portion'}
-                  </span>
                   <span className="bg-cream text-ink/40 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1">
                     <Info size={10} /> 24h mini.
                   </span>
@@ -91,21 +88,6 @@ export const ProductModal = ({ item, onClose }: ProductModalProps) => {
                     <h4 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3">Description</h4>
                     <p className="text-ink/60 leading-relaxed font-light">{item.description}</p>
                   </div>
-
-                  {item.allergens && item.allergens.length > 0 && (
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-ink/40 mb-3 flex items-center gap-2">
-                        <AlertCircle size={14} /> Allergènes
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {item.allergens.map((a) => (
-                          <span key={a} className="text-[10px] font-medium px-3 py-1 bg-cream rounded-lg border border-black/5 text-ink/60">
-                            {a}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 

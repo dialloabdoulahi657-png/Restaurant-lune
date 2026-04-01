@@ -9,13 +9,14 @@ import { Link } from 'react-router-dom';
 interface CartSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  menuItems?: any[];
 }
 
-export const CartSidebar = ({ isOpen, onClose }: CartSidebarProps) => {
+export const CartSidebar = ({ isOpen, onClose, menuItems = [] }: CartSidebarProps) => {
   const { cart, addToCart, removeFromCart, clearCart } = useApp();
 
   const cartItems = cart.map(item => {
-    const product = MOCK_MENU.find(m => m.id === item.id);
+    const product = menuItems.find((m: any) => m.id === item.id) || MOCK_MENU.find((m: any) => m.id === item.id);
     return { ...product, quantity: item.quantity };
   }).filter(item => item.id);
 
@@ -65,7 +66,7 @@ export const CartSidebar = ({ isOpen, onClose }: CartSidebarProps) => {
                 cartItems.map((item) => (
                   <div key={item.id} className="flex gap-4 group">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0 border border-black/5">
-                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={item.image_url || item.image} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-sm truncate">{item.name}</h3>
@@ -104,7 +105,7 @@ export const CartSidebar = ({ isOpen, onClose }: CartSidebarProps) => {
                   <span className="text-primary">{total.toLocaleString()} FCFA</span>
                 </div>
                 <p className="text-[10px] text-ink/40 uppercase tracking-widest text-center">
-                  Taxes et frais de service inclus
+                  Taxes incluses
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   <Button variant="outline" onClick={clearCart} className="border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200">

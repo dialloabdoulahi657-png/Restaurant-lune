@@ -1,13 +1,43 @@
 import * as React from 'react';
 import { motion } from 'motion/react';
 import { useApp } from '@/src/context';
-import { Button, Card } from '@/src/components/UI';
-import { ArrowRight, MapPin, Clock, Star } from 'lucide-react';
+import { Button, Card, Badge } from '@/src/components/UI';
+import { ArrowRight, MapPin, Clock, Star, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/Logo';
+import { supabase } from '@/src/lib/supabase';
 
 export const Home = () => {
   const { site } = useApp();
+  const [latestNews, setLatestNews] = React.useState<any[]>([]);
+  const siteId = site === 'Marcory' ? '1' : '2';
+
+  React.useEffect(() => {
+    const fetchLatestNews = async () => {
+      const { data } = await supabase
+        .from('news')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        const filtered = data.filter((item: any) => {
+          const sId = String(item.site_id || item.location || '');
+          if (!sId) return false;
+          
+          const normalizedSId = sId.toLowerCase();
+          const normalizedSite = String(site).toLowerCase();
+
+          return sId === siteId || 
+                 normalizedSId === normalizedSite || 
+                 sId === 'All' ||
+                 normalizedSId === 'all' ||
+                 normalizedSId === 'tous';
+        }).slice(0, 3);
+        setLatestNews(filtered);
+      }
+    };
+    fetchLatestNews();
+  }, [siteId]);
 
   return (
     <div className="pt-20">
@@ -167,6 +197,57 @@ export const Home = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Latest News */}
+      {latestNews.length > 0 && (
+        <section className="py-24 bg-cream/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-end mb-12">
+              <div>
+                <h2 className="text-4xl mb-4">Actualités</h2>
+                <p className="text-ink/60">Les derniers événements chez Lune {site}</p>
+              </div>
+              <Link to="/news">
+                <Button variant="ghost" className="text-primary gap-2">
+                  Voir tout <ArrowRight size={18} />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {latestNews.map((item, i) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Link to="/news">
+                    <Card className="group overflow-hidden border-none shadow-lg h-full">
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={item.image_url || item.image} 
+                          alt={item.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <div className="p-6">
+                        <div className="flex items-center gap-2 text-ink/40 text-[10px] font-bold uppercase tracking-widest mb-3">
+                          <Calendar size={12} />
+                          <span>{new Date(item.created_at || item.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</span>
+                        </div>
+                        <h3 className="text-xl mb-3 group-hover:text-primary transition-colors line-clamp-1">{item.title}</h3>
+                        <p className="text-sm text-ink/60 line-clamp-2">{item.content}</p>
+                      </div>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Testimonials */}
       <section className="py-24 bg-white">

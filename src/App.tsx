@@ -16,7 +16,7 @@ import { Toaster } from 'sonner';
 import { Logo } from './components/Logo';
 import { AnimatePresence, motion } from 'motion/react';
 import { Button, Input } from './components/UI';
-import { Send, ChevronUp } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PageWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -107,28 +107,26 @@ const AppContent = () => {
                 </ul>
               </div>
               <div>
-                <h4 className="font-bold mb-6 uppercase tracking-widest text-xs">Newsletter</h4>
-                <p className="text-cream/40 text-xs mb-6 leading-relaxed">
-                  Inscrivez-vous pour recevoir nos invitations exclusives et nos nouveautés.
-                </p>
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    toast.success('Merci pour votre inscription !');
-                    (e.target as HTMLFormElement).reset();
-                  }}
-                  className="flex gap-2"
-                >
-                  <Input 
-                    className="bg-white/5 border-white/10 text-cream text-xs py-2 h-10" 
-                    placeholder="votre@email.com" 
-                    type="email" 
-                    required 
-                  />
-                  <Button size="sm" className="h-10 w-10 p-0 shrink-0">
-                    <Send size={16} />
-                  </Button>
-                </form>
+                <h4 className="font-bold mb-6 uppercase tracking-widest text-xs">Nos Établissements</h4>
+                <div className="space-y-6">
+                  <div>
+                    <h5 className="text-[10px] uppercase tracking-widest text-primary mb-2 font-bold">LUNE Marcory</h5>
+                    <p className="text-cream/40 text-xs leading-relaxed">
+                      Zone 4, Rue du Canal<br />
+                      Abidjan, Côte d'Ivoire
+                    </p>
+                  </div>
+                  <div>
+                    <h5 className="text-[10px] uppercase tracking-widest text-primary mb-2 font-bold">LUNE Bingerville</h5>
+                    <p className="text-cream/40 text-xs leading-relaxed">
+                      Quartier Résidentiel<br />
+                      Bingerville, Côte d'Ivoire
+                    </p>
+                  </div>
+                  <div className="pt-4 border-t border-white/5">
+                    <p className="text-[10px] uppercase tracking-widest text-cream/20 font-bold">Ouvert 7j/7 • 07h - 23h</p>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="mt-20 pt-8 border-t border-white/5 text-center text-cream/20 text-xs">

@@ -36,8 +36,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 
-export const Card = ({ className, children }: { className?: string; children: React.ReactNode }) => (
-  <div className={cn('bg-white rounded-3xl shadow-sm border border-black/5 overflow-hidden', className)}>
+export const Card = ({ className, children, onClick }: { className?: string; children: React.ReactNode, onClick?: () => void }) => (
+  <div 
+    onClick={onClick}
+    className={cn('bg-white rounded-3xl shadow-sm border border-black/5 overflow-hidden', className)}
+  >
     {children}
   </div>
 );
@@ -55,10 +58,11 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
   )
 );
 
-export const Badge = ({ children, variant = 'primary' }: { children: React.ReactNode, variant?: 'primary' | 'secondary' }) => (
+export const Badge = ({ children, variant = 'primary', className }: { children: React.ReactNode, variant?: 'primary' | 'secondary', className?: string }) => (
   <span className={cn(
     'px-2 py-1 text-[10px] uppercase tracking-wider font-bold rounded-full',
-    variant === 'primary' ? 'bg-primary/10 text-primary' : 'bg-ink/10 text-ink'
+    variant === 'primary' ? 'bg-primary/10 text-primary' : 'bg-ink/10 text-ink',
+    className
   )}>
     {children}
   </span>

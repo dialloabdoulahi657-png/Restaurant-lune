@@ -2,34 +2,35 @@ export type Site = 'Marcory' | 'Bingerville';
 
 export interface MenuItem {
   id: string;
-  site_id: string;
-  category_id: string;
+  location: string;
+  category: string;
   name: string;
   description: string;
   price: number;
-  image_url: string;
-  is_available: boolean;
-  portions?: string;
-  allergens?: string[];
-}
-
-export interface MenuCategory {
-  id: string;
-  site_id: string;
-  name: string;
-  display_order: number;
+  image: string;
+  available: boolean;
+  createdAt?: string;
+  // Fallback fields for compatibility
+  site_id?: string;
+  image_url?: string;
+  is_available?: boolean;
+  disponible?: boolean;
 }
 
 export interface Order {
   id: string;
-  site_id: string;
+  location: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
   total_price: number;
   status: 'received' | 'preparing' | 'ready' | 'completed';
+  pickup_date: string;
   pickup_time: string;
-  created_at: string;
+  notes?: string;
+  items: any;
+  created_at?: string;
+  site_id?: string;
 }
 
 export interface OrderItem {
@@ -43,7 +44,7 @@ export interface OrderItem {
 
 export interface Reservation {
   id: string;
-  site_id: string;
+  location: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
@@ -52,14 +53,18 @@ export interface Reservation {
   guests: number;
   zone: 'Terrasse' | 'Salle Climatisée';
   status: 'pending' | 'confirmed' | 'cancelled';
-  created_at: string;
+  created_at?: string;
+  site_id?: string;
 }
 
 export interface News {
   id: string;
-  site_id: string;
+  location: string;
   title: string;
+  summary: string;
   content: string;
-  image_url: string;
-  created_at: string;
+  image: string;
+  created_at?: string;
+  site_id?: string;
+  image_url?: string;
 }

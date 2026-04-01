@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useApp } from '../context';
-import { MOCK_MENU } from '../mockData';
 import { Card, Button, Input } from '../components/UI';
 import { ShoppingBag, CreditCard, Smartphone, Wallet, CheckCircle2, ChevronLeft, Lock, Info } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { supabase } from '@/src/lib/supabase';
 
 type PaymentMethod = 'card' | 'momo' | 'wave' | 'pickup';
 
@@ -18,7 +18,8 @@ export const Checkout = () => {
     name: '',
     email: '',
     phone: '',
-    notes: ''
+    notes: '',
+    allergies: ''
   });
 
   const [orderSummary, setOrderSummary] = React.useState<{
@@ -26,15 +27,26 @@ export const Checkout = () => {
     total: number;
     subtotal: number;
     serviceFee: number;
+    orderId?: string;
   } | null>(null);
 
+  const [menuItems, setMenuItems] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchMenuItems = async () => {
+      const { data } = await supabase.from('menu').select('*');
+      if (data) setMenuItems(data);
+    };
+    fetchMenuItems();
+  }, []);
+
   const cartItems = cart.map(item => {
-    const product = MOCK_MENU.find(m => m.id === item.id);
+    const product = menuItems.find((m: any) => m.id === item.id);
     return { ...product, quantity: item.quantity };
   }).filter(item => item.id);
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price || 0) * item.quantity, 0);
-  const serviceFee = 500;
+  const serviceFee = 0;
   const total = subtotal + serviceFee;
 
   React.useEffect(() => {
@@ -49,24 +61,49 @@ export const Checkout = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     const loadingToast = toast.loading('Finalisation de la commande...');
     
-    // Capture summary before clearing cart
-    setOrderSummary({
-      items: [...cartItems],
-      total,
-      subtotal,
-      serviceFee
-    });
+    const orderId = `LN-${Math.floor(Math.random() * 90000) + 10000}`;
+    const newOrder = {
+      location: site,
+      customer_name: formData.name,
+      customer_email: formData.email,
+      customer_phone: formData.phone,
+      items: cartItems.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      total_price: total,
+      pickup_time: 'À définir',
+      pickup_date: pickupDate || new Date().toISOString().split('T')[0],
+      status: 'received',
+      notes: formData.allergies ? `ALLERGIES: ${formData.allergies}${formData.notes ? ` | NOTES: ${formData.notes}` : ''}` : formData.notes
+    };
 
-    // Simulate order processing
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.from('orders').insert([newOrder]);
+      if (error) throw error;
+
+      // Capture summary before clearing cart
+      setOrderSummary({
+        items: [...cartItems],
+        total,
+        subtotal,
+        serviceFee,
+        orderId
+      });
+
       toast.dismiss(loadingToast);
       setStep('success');
       clearCart();
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+    } catch (error) {
+      console.error('Error saving order:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Erreur lors de la validation de la commande');
+    }
   };
 
   if (step === 'success' && orderSummary) {
@@ -209,9 +246,18 @@ export const Checkout = () => {
                         />
                       </div>
                       <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-ink/40 ml-1">Allergies (Optionnel)</label>
+                        <Input 
+                          placeholder="Ex: Arachides, Gluten..."
+                          value={formData.allergies}
+                          onChange={(e) => setFormData({...formData, allergies: e.target.value})}
+                          className="h-14 rounded-2xl bg-cream/30 border border-black/5"
+                        />
+                      </div>
+                      <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-ink/40 ml-1">Notes pour la commande (Optionnel)</label>
                         <textarea 
-                          placeholder="Allergies, message cadeau..."
+                          placeholder="Message cadeau, instructions spéciales..."
                           value={formData.notes}
                           onChange={(e) => setFormData({...formData, notes: e.target.value})}
                           className="w-full p-4 h-32 rounded-2xl bg-cream/30 border border-black/5 focus:ring-primary/10 text-sm resize-none"
@@ -274,7 +320,7 @@ export const Checkout = () => {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex gap-4">
                     <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0">
-                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={item.image_url || item.image} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm truncate">{item.name}</p>
@@ -289,10 +335,6 @@ export const Checkout = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-ink/40">Sous-total</span>
                   <span className="font-bold">{subtotal.toLocaleString()} FCFA</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-ink/40">Frais de service</span>
-                  <span className="font-bold">{serviceFee.toLocaleString()} FCFA</span>
                 </div>
                 <div className="h-px bg-black/5" />
                 <div className="flex justify-between text-xl font-bold">

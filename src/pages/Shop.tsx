@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useApp } from '../context';
-import { MOCK_MENU, MOCK_CATEGORIES } from '../mockData';
 import { Card, Button, Input } from '../components/UI';
 import { ShoppingBag, Trash2, Plus, Minus, Clock, Calendar as CalendarIcon, Info, ChevronRight, Grid, List, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ProductModal } from '../components/ProductModal';
 import { CartSidebar } from '../components/CartSidebar';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/src/lib/supabase';
 
 export const Shop = () => {
   const { cart, addToCart, removeFromCart, updateQuantity, clearCart, site, pickupDate, setPickupDate } = useApp();
@@ -16,6 +16,57 @@ export const Shop = () => {
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   const [activeCategory, setActiveCategory] = React.useState<string | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [categories, setCategories] = React.useState<any[]>([]);
+  const [items, setItems] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  const siteId = site === 'Marcory' ? '1' : '2';
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const { data: menuData } = await supabase
+        .from('menu')
+        .select('*');
+
+      if (menuData) {
+        // Filter by site_id (numeric ID or 'All')
+        const filteredBySite = menuData.filter((item: any) => {
+          const sId = String(item.site_id || item.location || '');
+          if (!sId) return false;
+          
+          const normalizedSId = sId.toLowerCase();
+          const normalizedSite = String(site).toLowerCase();
+
+          return sId === siteId || 
+                 normalizedSId === normalizedSite || 
+                 sId === 'All' ||
+                 normalizedSId === 'all' ||
+                 normalizedSId === 'tous';
+        });
+        
+        setItems(filteredBySite);
+        
+        // Extract unique categories from menu items
+        const uniqueCategories = Array.from(new Set(filteredBySite.map((item: any) => item.category)))
+          .filter(Boolean)
+          .map(name => ({
+            id: name,
+            name
+          }));
+        setCategories(uniqueCategories);
+      }
+    } catch (error) {
+      console.error('Error fetching shop data:', error);
+      toast.error('Erreur lors du chargement des produits');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchData();
+  }, [siteId]);
 
   // Reset category when site changes
   React.useEffect(() => {
@@ -23,18 +74,15 @@ export const Shop = () => {
   }, [site]);
   
   const today = new Date().toISOString().split('T')[0];
-  const siteId = site === 'Marcory' ? '1' : '2';
-  const categories = MOCK_CATEGORIES.filter(c => c.site_id === siteId);
-  const items = MOCK_MENU.filter(i => i.site_id === siteId);
 
   const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cart.reduce((acc, item) => {
-    const product = MOCK_MENU.find(m => m.id === item.id);
+    const product = items.find((m: any) => m.id === item.id);
     return acc + (product?.price || 0) * item.quantity;
   }, 0);
 
   const filteredItems = items.filter(item => {
-    const matchesCategory = activeCategory ? item.category_id === activeCategory : true;
+    const matchesCategory = activeCategory ? item.category === activeCategory : true;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -171,7 +219,9 @@ export const Shop = () => {
             {/* Grid */}
             <div className={viewMode === 'grid' ? 'grid md:grid-cols-2 gap-8' : 'space-y-6'}>
               <AnimatePresence mode="popLayout">
-                {filteredItems.map((item) => (
+                  {filteredItems.map((item) => {
+                    const isAvailable = item.available !== undefined ? item.available : (item.is_available !== undefined ? item.is_available : item.disponible);
+                    return (
                   <motion.div
                     key={item.id}
                     layout
@@ -186,23 +236,18 @@ export const Shop = () => {
                         onClick={() => setSelectedProduct(item)}
                       >
                         <img 
-                          src={item.image_url} 
+                          src={item.image_url || item.image} 
                           alt={item.name} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                           referrerPolicy="no-referrer"
                         />
-                        {!item.is_available && (
+                        {!isAvailable && (
                           <div className="absolute inset-0 bg-ink/60 backdrop-blur-[2px] flex items-center justify-center">
                             <span className="bg-white text-ink text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-xl">
                               Rupture de stock
                             </span>
                           </div>
                         )}
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-white/90 backdrop-blur-sm text-ink text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
-                            {item.portions || '1 portion'}
-                          </span>
-                        </div>
                       </div>
 
                       {/* Content */}
@@ -236,7 +281,7 @@ export const Shop = () => {
                               addToCart(item.id);
                               toast.success(`${item.name} ajouté au panier`);
                             }}
-                            disabled={!item.is_available}
+                            disabled={!isAvailable}
                             className="flex-1 h-10 rounded-xl text-xs font-bold uppercase tracking-widest"
                           >
                             Ajouter
@@ -245,7 +290,8 @@ export const Shop = () => {
                       </div>
                     </Card>
                   </motion.div>
-                ))}
+                );
+              })}
               </AnimatePresence>
             </div>
 
@@ -266,6 +312,7 @@ export const Shop = () => {
       <CartSidebar 
         isOpen={isCartOpen} 
         onClose={() => setIsCartOpen(false)} 
+        menuItems={items}
       />
     </div>
   );

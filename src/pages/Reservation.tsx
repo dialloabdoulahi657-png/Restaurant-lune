@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context';
 import { toast } from 'sonner';
+import { supabase } from '@/src/lib/supabase';
 
 type ReservationStep = 'guests' | 'date' | 'time' | 'details' | 'success';
 
@@ -19,7 +20,8 @@ export const Reservation = () => {
     email: '',
     phone: '',
     occasion: '',
-    requests: ''
+    requests: '',
+    zone: 'Terrasse'
   });
 
   const steps: ReservationStep[] = ['guests', 'date', 'time', 'details'];
@@ -37,10 +39,34 @@ export const Reservation = () => {
     else if (step === 'details') setStep('time');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStep('success');
-    toast.success('Demande de réservation envoyée');
+    
+    const siteId = site === 'Marcory' ? '1' : '2';
+    
+    const newReservation = {
+      location: site,
+      customer_name: formData.name,
+      customer_email: formData.email,
+      customer_phone: formData.phone,
+      guests: Number(formData.guests.replace('+', '')),
+      reservation_date: formData.date,
+      reservation_time: formData.time,
+      zone: formData.zone,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      const { error } = await supabase.from('reservations').insert([newReservation]);
+      if (error) throw error;
+
+      setStep('success');
+      toast.success('Demande de réservation envoyée');
+    } catch (error) {
+      console.error('Error saving reservation:', error);
+      toast.error('Erreur lors de l\'envoi de la réservation');
+    }
   };
 
   const today = new Date().toISOString().split('T')[0];
@@ -270,6 +296,18 @@ export const Reservation = () => {
                       />
                     </div>
                     <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest text-ink/40 ml-1">Zone de préférence</label>
+                      <select 
+                        value={formData.zone}
+                        onChange={(e) => setFormData({...formData, zone: e.target.value})}
+                        className="w-full h-14 border border-black/10 bg-cream/20 rounded-2xl px-4 text-sm focus:ring-0 focus:border-primary transition-colors appearance-none"
+                      >
+                        <option value="Rez-de-chaussée">Rez-de-chaussée</option>
+                        <option value="Premier étage">Premier étage</option>
+                        <option value="Terrasse">Terrasse</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
                       <label className="text-[10px] uppercase tracking-widest text-ink/40 ml-1">Note ou occasion (Optionnel)</label>
                       <textarea 
                         value={formData.requests}
@@ -331,16 +369,20 @@ export const Reservation = () => {
                         <p className="font-bold">{new Date(formData.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à {formData.time}</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-ink/40 uppercase text-[10px] font-bold tracking-widest mb-1">Convives</p>
-                        <p className="font-bold">{formData.guests} personnes</p>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-ink/40 uppercase text-[10px] font-bold tracking-widest mb-1">Convives</p>
+                          <p className="font-bold">{formData.guests} personnes</p>
+                        </div>
+                        <div>
+                          <p className="text-ink/40 uppercase text-[10px] font-bold tracking-widest mb-1">Zone</p>
+                          <p className="font-bold">{formData.zone}</p>
+                        </div>
                       </div>
                       <div>
                         <p className="text-ink/40 uppercase text-[10px] font-bold tracking-widest mb-1">Lieu</p>
                         <p className="font-bold">Lune {site}</p>
                       </div>
-                    </div>
                   </div>
                 </Card>
 
