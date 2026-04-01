@@ -7,7 +7,7 @@ import { useApp } from '../context';
 import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 
-type ReservationStep = 'guests' | 'date' | 'time' | 'details' | 'success';
+type ReservationStep = 'guests' | 'date' | 'time' | 'zone' | 'details' | 'success';
 
 export const Reservation = () => {
   const { site } = useApp();
@@ -24,19 +24,21 @@ export const Reservation = () => {
     zone: 'Terrasse'
   });
 
-  const steps: ReservationStep[] = ['guests', 'date', 'time', 'details'];
+  const steps: ReservationStep[] = ['guests', 'date', 'time', 'zone', 'details'];
   const currentStepIndex = steps.indexOf(step);
 
   const handleNext = () => {
     if (step === 'guests') setStep('date');
     else if (step === 'date') setStep('time');
-    else if (step === 'time') setStep('details');
+    else if (step === 'time') setStep('zone');
+    else if (step === 'zone') setStep('details');
   };
 
   const handleBack = () => {
     if (step === 'date') setStep('guests');
     else if (step === 'time') setStep('date');
-    else if (step === 'details') setStep('time');
+    else if (step === 'zone') setStep('time');
+    else if (step === 'details') setStep('zone');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -243,6 +245,53 @@ export const Reservation = () => {
               </motion.div>
             )}
 
+            {step === 'zone' && (
+              <motion.div
+                key="zone"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-10"
+              >
+                <div className="flex items-center justify-between">
+                  <button onClick={handleBack} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                    <ChevronLeft size={20} />
+                  </button>
+                  <div className="text-center space-y-1">
+                    <h2 className="text-2xl font-serif">Zone de préférence</h2>
+                    <p className="text-sm text-ink/40">Où souhaitez-vous être installé ?</p>
+                  </div>
+                  <div className="w-10" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { id: 'Rez-de-chaussée', label: 'Rez-de-chaussée', desc: 'Ambiance feutrée' },
+                    { id: 'Premier étage', label: 'Premier étage', desc: 'Vue panoramique' },
+                    { id: 'Terrasse', label: 'Terrasse', desc: 'Plein air' }
+                  ].map((z) => (
+                    <button
+                      key={z.id}
+                      onClick={() => {
+                        setFormData({...formData, zone: z.id});
+                        handleNext();
+                      }}
+                      className={`p-8 rounded-[32px] flex flex-col items-center text-center transition-all border ${
+                        formData.zone === z.id 
+                          ? 'bg-ink text-white border-ink shadow-xl scale-105' 
+                          : 'bg-white border-black/5 hover:border-primary/40 text-ink/60'
+                      }`}
+                    >
+                      <span className="text-lg font-serif mb-2">{z.label}</span>
+                      <span className={`text-[10px] uppercase tracking-widest ${formData.zone === z.id ? 'text-white/40' : 'text-ink/40'}`}>
+                        {z.desc}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {step === 'details' && (
               <motion.div
                 key="details"
@@ -294,18 +343,6 @@ export const Reservation = () => {
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                         className="h-14 border border-black/10 bg-cream/20 rounded-2xl focus:border-primary transition-colors"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-ink/40 ml-1">Zone de préférence</label>
-                      <select 
-                        value={formData.zone}
-                        onChange={(e) => setFormData({...formData, zone: e.target.value})}
-                        className="w-full h-14 border border-black/10 bg-cream/20 rounded-2xl px-4 text-sm focus:ring-0 focus:border-primary transition-colors appearance-none"
-                      >
-                        <option value="Rez-de-chaussée">Rez-de-chaussée</option>
-                        <option value="Premier étage">Premier étage</option>
-                        <option value="Terrasse">Terrasse</option>
-                      </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase tracking-widest text-ink/40 ml-1">Note ou occasion (Optionnel)</label>
